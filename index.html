@@ -24,7 +24,80 @@
     
     <div id="time" class="update-time">最終更新: 読み込み中...</div>
 </div>
+<div id="admin-auth" style="margin-top: 50px; border-top: 1px dashed var(--main-color); padding-top: 20px;">
+        <button id="show-panel-btn" onclick="document.getElementById('pass-input-area').style.display='block'; this.style.display='none';" style="background: none; color: #333; border: 1px solid #333; font-size: 0.7rem; cursor: pointer;">Admin Login</button>
+        
+        <div id="pass-input-area" style="display:none;">
+            <input type="password" id="admin-pass" placeholder="Password" style="width:auto; border: 1px solid var(--main-color); background: #000; color: var(--main-color); padding: 5px;">
+            <button onclick="loginAdmin()" style="padding: 5px 10px; background: var(--main-color); color: #000; font-weight: bold; border: none; cursor: pointer;">Login</button>
+        </div>
+    </div>
 
+    <div id="flash-generator" style="display:none; margin-top: 20px; text-align: left; background: #111; padding: 15px; border: 1px solid var(--main-color);">
+        <h3 style="font-size: 1rem; margin-top: 0;">🛠 速報画像ジェネレーター</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+            <input type="text" id="in-name" placeholder="候補者名">
+            <input type="text" id="in-party" placeholder="政党名">
+            <input type="number" id="in-votes" placeholder="得票数">
+            <button onclick="generateFlash()" style="background: #ff4100; color: white; border: none; font-weight: bold; cursor: pointer;">画像として保存</button>
+        </div>
+    </div>
+
+    <div id="export-area" style="position: fixed; top: -1000px; width: 1200px; height: 630px; background: #000; color: #00ff41; padding: 40px; font-family: 'Courier New', monospace; border: 10px solid #00ff41; box-sizing: border-box;">
+        <div style="font-size: 2rem; font-weight: bold; border-bottom: 2px solid #00ff41; padding-bottom: 10px; display: flex; justify-content: space-between;">
+            <span>大東州議会議員総選挙 速報</span>
+            <span style="color: #fff; background: #cc0000; padding: 0 10px;">当確</span>
+        </div>
+        <div style="display: flex; align-items: center; margin-top: 60px; gap: 40px;">
+            <div style="font-size: 10rem; border: 5px solid #00ff41; padding: 20px; line-height: 1;">当</div>
+            <div style="flex-grow: 1;">
+                <div id="out-name" style="font-size: 8rem; border-bottom: 3px solid #00ff41;">氏名</div>
+                <div id="out-party" style="font-size: 3rem; margin-top: 10px; color: #888;">政党名</div>
+            </div>
+        </div>
+        <div style="text-align: right; margin-top: 30px;">
+            <span style="font-size: 2rem;">得票数:</span>
+            <span id="out-votes" style="font-size: 5rem; font-weight: bold;">0</span>
+            <span style="font-size: 2rem;"> 票</span>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script>
+        const SECRET_PASS = "daito2026"; // パスワードを好きなものに変えてください
+
+        function loginAdmin() {
+            const pass = document.getElementById('admin-pass').value;
+            if (pass === SECRET_PASS) {
+                document.getElementById('flash-generator').style.display = 'block';
+                document.getElementById('admin-auth').style.display = 'none';
+            } else {
+                alert("認証失敗");
+            }
+        }
+
+        async function generateFlash() {
+            const name = document.getElementById('in-name').value;
+            const party = document.getElementById('in-party').value;
+            const votes = document.getElementById('in-votes').value;
+
+            if(!name || !votes) return alert("情報を入力してください");
+
+            document.getElementById('out-name').innerText = name;
+            document.getElementById('out-party').innerText = party;
+            document.getElementById('out-votes').innerText = Number(votes).toLocaleString();
+
+            const exportArea = document.getElementById('export-area');
+            html2canvas(exportArea).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `速報_${name}.png`;
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+    
 <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbyfHXAuqwDIQ5Pi65RIvZ9QiAmqWgunOfPQt9lWHrzsfVcCX_BAQS2bSy17QPR6131P/exec"; 
 
