@@ -3,99 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>大東州議会議員選挙・立候補届出</title>
+    <title>大東州総選挙 開票速報</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root { --main-color: #00ff41; --bg-color: #0d0d0d; }
-        body { background-color: var(--bg-color); color: var(--main-color); font-family: 'Courier New', monospace; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
-        .container { border: 2px solid var(--main-color); padding: 30px; max-width: 600px; width: 100%; box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); background: rgba(0, 0, 0, 0.9); }
-        h1 { text-align: center; border-bottom: 2px solid var(--main-color); padding-bottom: 10px; font-size: 1.4rem; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; }
-        input, select, textarea { width: 100%; padding: 10px; background: #111; border: 1px solid var(--main-color); color: var(--main-color); box-sizing: border-box; outline: none; }
-        textarea { height: 100px; resize: none; }
-        button { width: 100%; padding: 15px; background: var(--main-color); color: #000; border: none; font-weight: bold; cursor: pointer; font-size: 1.1rem; margin-top: 10px; }
-        button:hover { background: #00cc33; box-shadow: 0 0 10px var(--main-color); }
-        .status { margin-top: 15px; text-align: center; font-size: 0.9rem; }
-        .notice { font-size: 0.75rem; color: #ffadad; margin-bottom: 20px; border: 1px dashed #ffadad; padding: 10px; }
+        body { background-color: var(--bg-color); color: var(--main-color); font-family: 'Courier New', monospace; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { border: 2px solid var(--main-color); padding: 20px; width: 90%; max-width: 800px; background: rgba(0, 0, 0, 0.8); box-shadow: 0 0 15px rgba(0, 255, 65, 0.3); }
+        h1 { border-bottom: 2px solid var(--main-color); padding-bottom: 10px; }
+        canvas { margin-top: 20px; background: #111; padding: 10px; }
+        .update-time { font-size: 0.8rem; color: #888; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>第一回大東州議会議員総選挙<br>立候補届出窓口</h1>
+    <h1>📊 第一回大東州総選挙 開票速報</h1>
+    <p>リアルタイム集計システム稼働中</p>
     
-    <div class="notice">
-        【警告】大東州憲法および選挙法に基づき、虚偽の届出は厳罰に処されます。
-    </div>
-
-    <div id="entry-form">
-        <div class="form-group">
-            <label>Minecraft ID</label>
-            <input type="text" id="mcid" placeholder="例: Karo_Taro" required>
-        </div>
-
-        <div class="form-group">
-            <label>所属政党</label>
-            <input type="text" id="party" placeholder="無所属の場合は「無所属」と記入" required>
-        </div>
-
-        <div class="form-group">
-            <label>主な公約（マニフェスト）</label>
-            <textarea id="manifesto" placeholder="大東州をどのように発展させるか記述してください"></textarea>
-        </div>
-
-        <div class="form-group">
-            <label>ポスター用画像URL（任意）</label>
-            <input type="url" id="imgUrl" placeholder="https://...">
-        </div>
-
-        <button onclick="submitEntry()">立候補を届け出る</button>
-        <div id="status" class="status"></div>
-    </div>
+    <canvas id="voteChart"></canvas>
+    
+    <div id="time" class="update-time">最終更新: 読み込み中...</div>
 </div>
 
 <script>
-    // ※出馬専用の新しいGAS URLを作成してここに貼る
-    const ENTRY_GAS_URL = "https://script.google.com/macros/s/AKfycbyLyicTUeP2uJOpclJVIUXpRhbVuqIjcZ6t4tf_ReRTOf0qvG-7Zl_BL42Pef1WP8T4Tg/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbyfHXAuqwDIQ5Pi65RIvZ9QiAmqWgunOfPQt9lWHrzsfVcCX_BAQS2bSy17QPR6131P/exec"; // 投票サイトと同じURLでOK！
 
-    async function submitEntry() {
-        const data = {
-            mcid: document.getElementById('mcid').value.trim(),
-            party: document.getElementById('party').value.trim(),
-            manifesto: document.getElementById('manifesto').value.trim(),
-            imgUrl: document.getElementById('imgUrl').value.trim()
-        };
-
-        if (!data.mcid || !data.party || !data.manifesto) {
-            alert("必須項目を入力してください。");
-            return;
-        }
-
-        if(!confirm("この内容で立候補を届け出ます。よろしいですか？")) return;
-
-        const status = document.getElementById('status');
-        status.innerText = "⏳ 選挙管理委員会へ送信中...";
-
+    async function updateChart() {
         try {
-            const response = await fetch(ENTRY_GAS_URL, {
-                method: "POST",
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
+            const response = await fetch(GAS_URL);
+            const data = await response.json();
 
-            if (result.status === "success") {
-                document.getElementById('entry-form').innerHTML = `
-                    <h2 style="text-align:center;">届出を受理しました</h2>
-                    <p style="text-align:center;">審査後、公式候補者リストに掲載されます。<br>大東州の未来を背負う覚悟に敬意を表します。</p>
-                `;
-            } else {
-                status.innerText = "❌ エラー: " + result.message;
-            }
+            // データの整形（得票数順に並び替え）
+            const sortedData = Object.entries(data).sort((a, b) => b[1] - a[1]);
+            const labels = sortedData.map(item => item[0]);
+            const values = sortedData.map(item => item[1]);
+
+            // グラフの描画
+            const ctx = document.getElementById('voteChart').getContext('2d');
+            
+            // すでにグラフがある場合は破棄して再作成
+            if (window.myChart) window.myChart.destroy();
+
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '得票数',
+                        data: values,
+                        backgroundColor: 'rgba(0, 255, 65, 0.5)',
+                        borderColor: '#00ff41',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // 横棒グラフ
+                    scales: {
+                        x: { beginAtZero: true, grid: { color: '#333' }, ticks: { color: '#00ff41' } },
+                        y: { ticks: { color: '#00ff41' } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            document.getElementById('time').innerText = "最終更新: " + new Date().toLocaleTimeString();
         } catch (e) {
-            status.innerText = "❌ 送信に失敗しました。";
+            console.error("データ取得失敗:", e);
         }
     }
-</script>
 
+    // 初回読み込みと自動更新（30秒おき）
+    updateChart();
+    setInterval(updateChart, 30000);
+</script>
 </body>
 </html>
